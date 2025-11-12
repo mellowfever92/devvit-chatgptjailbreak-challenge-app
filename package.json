@@ -1,0 +1,16 @@
+{
+  "name": "chatgptjailbreak-challenge-app",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@devvit/public-api": "^0.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.3.3"
+  }
+}
