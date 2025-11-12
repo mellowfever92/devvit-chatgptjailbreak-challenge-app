@@ -1,0 +1,10 @@
+export const challengeKey = (challengeId: string): string => `challenge:${challengeId}`;
+export const challengeSlugKey = (slug: string): string => `challenge:slug:${slug}`;
+export const challengeListKey = 'challenge:list';
+export const submissionsKey = (challengeId: string): string => `challenge:${challengeId}:submissions`;
+export const submissionKey = (submissionId: string): string => `submission:${submissionId}`;
+export const leaderboardApprovedKey = 'leaderboard:approved';
+export const leaderboardVotesKey = 'leaderboard:votes';
+export const voteKey = (challengeId: string, userId: string): string => `challenge:${challengeId}:vote:${userId}`;
+export const rateLimitKey = (challengeId: string, userId: string): string => `ratelimit:${challengeId}:${userId}`;
+export const apiStatsKey = 'stats:api-usage';
