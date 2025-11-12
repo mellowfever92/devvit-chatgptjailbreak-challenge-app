@@ -1,4 +1,4 @@
-name: chatgptjailbreak-challenge-app
+name: challenge-app
 version: 0.1.0
 api: 0.9.4
-entryPoint: "src/main.tsx"
+entryPoint: src/main.tsx

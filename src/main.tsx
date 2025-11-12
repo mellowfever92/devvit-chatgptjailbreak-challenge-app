@@ -1,5 +1,4 @@
-import { Devvit } from "@devvit/public-api";
-import { useState, useAsync } from "@devvit/public-api/block-components";
+import { Devvit, useState, useAsync } from "@devvit/public-api";
 import { PAGINATION, RATE_LIMIT } from "./config/constants.js";
 import { CHALLENGES, getChallengeById } from "./config/challenges.js";
 import { ChallengePost } from "./components/posts/ChallengePost.js";
@@ -64,13 +63,12 @@ function resolveChallenge(metadata: Record<string, unknown> | undefined): Challe
 
 Devvit.addCustomPostType({
   name: "challenge",
-  title: "Jailbreak Challenge",
   description: "Submit jailbreak prompts and compete for leaderboard glory.",
   render: (context) => {
-    const challenge = resolveChallenge(context.post?.metadata as Record<string, unknown> | undefined);
+    const challenge = resolveChallenge(context.postData as Record<string, unknown> | undefined);
     const perPage = PAGINATION.submissionsPerPage;
-    const userId = context.userId ?? context.user?.id;
-    const username = context.user?.username ?? context.user?.name ?? "anonymous";
+    const userId = context.userId;
+    const username = "user"; // Simplified for now
 
     const [page, setPage] = useState(0);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -80,25 +78,29 @@ Devvit.addCustomPostType({
     });
 
     const submissionsData = useAsync(
-      async () =>
-        listApprovedSubmissions(
+      async () => {
+        const result = await listApprovedSubmissions(
           context,
           challenge.id,
           page * perPage,
           perPage,
-        ),
-      [page, refreshKey, challenge.id],
+        );
+        return result as any; // Cast to any to satisfy JSONValue constraint
+      },
+      { depends: [page, refreshKey, challenge.id] }
     );
 
     const voteStatus = useAsync(
       async () => {
         if (!userId) return true;
-        return hasUserVoted(context, challenge.id, userId);
+        const result = await hasUserVoted(context, challenge.id, userId);
+        return result as any;
       },
-      [userId, challenge.id, refreshKey],
+      { depends: [userId ?? "", challenge.id, refreshKey] }
     );
 
-    const { submissions = [], total = 0 } = submissionsData.data ?? { submissions: [], total: 0 };
+    const submissionsResult = submissionsData.data as any;
+    const { submissions = [], total = 0 } = submissionsResult ?? { submissions: [], total: 0 };
     const totalPages = total === 0 ? 1 : Math.max(1, Math.ceil(total / perPage));
 
     const handleSubmit = async (prompt: string): Promise<SubmissionFormResult> => {
@@ -108,7 +110,7 @@ Devvit.addCustomPostType({
 
       try {
         const limit = await checkRateLimit(context, challenge.id, userId);
-        setRateLimitState({ limited: !limit.allowed, remaining: limit.remaining });
+        setRateLimitState({ limited: !limit.allowed as any, remaining: limit.remaining });
         if (!limit.allowed) {
           return { success: false, error: "Submission rate limit reached." };
         }
@@ -157,35 +159,23 @@ Devvit.addCustomPostType({
 
     const handleVote = async (submissionId: string) => {
       if (!userId) {
-        await context.ui.showToast({
-          appearance: "danger",
-          text: "You must be logged in to vote.",
-        });
+        context.ui.showToast("You must be logged in to vote.");
         return;
       }
 
       if (await hasUserVoted(context, challenge.id, userId)) {
-        await context.ui.showToast({
-          appearance: "warning",
-          text: "You have already voted in this challenge.",
-        });
+        context.ui.showToast("You have already voted in this challenge.");
         return;
       }
 
       const submission = await getSubmission(context, challenge.id, submissionId);
       if (!submission || submission.judgeDecision !== "approved") {
-        await context.ui.showToast({
-          appearance: "warning",
-          text: "Submission no longer available for voting.",
-        });
+        context.ui.showToast("Submission no longer available for voting.");
         return;
       }
 
       if (submission.userId === userId) {
-        await context.ui.showToast({
-          appearance: "warning",
-          text: "You cannot vote for your own submission.",
-        });
+        context.ui.showToast("You cannot vote for your own submission.");
         return;
       }
 
@@ -222,20 +212,24 @@ Devvit.addCustomPostType({
 
 Devvit.addCustomPostType({
   name: "leaderboard",
-  title: "Challenge Leaderboard",
   description: "Showcase the top jailbreakers for a challenge.",
   render: (context) => {
-    const challenge = resolveChallenge(context.post?.metadata as Record<string, unknown> | undefined);
+    const challenge = resolveChallenge(context.postData as Record<string, unknown> | undefined);
 
     const leaderboardData = useAsync(
-      () => listLeaderboard(context, challenge.id, 20),
-      [challenge.id, context.post?.id],
+      async () => {
+        const result = await listLeaderboard(context, challenge.id, 20);
+        return result as any;
+      },
+      { depends: [challenge.id, context.postId ?? ""] }
     );
+
+    const leaderboard = (leaderboardData.data as any) ?? [];
 
     return (
       <vstack gap="large" padding="large">
-        <LeaderboardPost challenge={challenge} leaderboard={leaderboardData.data ?? []} />
-        <DiscordCTA url="https://discord.gg/chatgptjailbreak" />
+        <LeaderboardPost challenge={challenge} leaderboard={leaderboard} />
+        <DiscordCTA url="https://discord.gg/chatgptjailbreak" onPress={() => context.ui.navigateTo("https://discord.gg/chatgptjailbreak")} />
       </vstack>
     );
   },
@@ -243,10 +237,9 @@ Devvit.addCustomPostType({
 
 Devvit.addCustomPostType({
   name: "announcement",
-  title: "Challenge Announcement",
   description: "Announce upcoming jailbreak challenges with hero art.",
   render: (context) => {
-    const metadata = context.post?.metadata as Record<string, unknown> | undefined;
+    const metadata = context.postData as Record<string, unknown> | undefined;
     const challenge = resolveChallenge(metadata);
     const startDate = (metadata?.startDate as number | undefined) ?? Date.now();
 

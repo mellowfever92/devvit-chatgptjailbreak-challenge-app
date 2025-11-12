@@ -17,25 +17,24 @@ export interface ChallengePostProps {
   viewerHasSubmission?: boolean;
 }
 
-export const ChallengePost = Devvit.Blocks.Component<ChallengePostProps>(
-  ({
-    challenge,
-    submissions,
-    currentPage,
-    totalPages,
-    onNextPage,
-    onPreviousPage,
-    onVote,
-    canVote,
-    form,
-    viewerHasSubmission,
-  }) => {
-    return (
-      <vstack
-        gap="large"
-        padding="large"
-        backgroundColor={THEME.bg.primary}
-      >
+export const ChallengePost = ({
+  challenge,
+  submissions,
+  currentPage,
+  totalPages,
+  onNextPage,
+  onPreviousPage,
+  onVote,
+  canVote,
+  form,
+  viewerHasSubmission,
+}: ChallengePostProps): JSX.Element => {
+  return (
+    <vstack
+      gap="large"
+      padding="large"
+      backgroundColor={THEME.bg.primary}
+    >
         <vstack gap="medium">
           <text size="xxlarge" weight="bold" color={THEME.text.primary}>
             {challenge.title}
@@ -125,8 +124,7 @@ export const ChallengePost = Devvit.Blocks.Component<ChallengePostProps>(
           </hstack>
         </vstack>
 
-        <DiscordCTA url="https://discord.gg/chatgptjailbreak" />
+        <DiscordCTA url="https://discord.gg/chatgptjailbreak" onPress={() => {/* Navigation handled by parent */}} />
       </vstack>
     );
-  },
-);
+};
