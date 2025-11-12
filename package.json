@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev": "devvit preview",
+    "upload": "devvit upload"
   },
   "dependencies": {
     "@devvit/public-api": "^0.9.4"

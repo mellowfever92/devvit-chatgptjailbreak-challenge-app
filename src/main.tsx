@@ -35,6 +35,9 @@ Devvit.configure({
   http: true,
 });
 
+// Configure OpenAI API Key setting (used in production on Reddit)
+// For local development, the key is read from process.env.OPENAI_API_KEY (.env file)
+// See src/config/openai.ts for the implementation
 Devvit.addSettings([
   {
     type: "string",
@@ -253,3 +256,4 @@ Devvit.addCustomPostType({
   },
 });
 
+export default Devvit;

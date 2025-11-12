@@ -35,9 +35,19 @@ async function callOpenAI(
   model: string,
   messages: { role: "system" | "user" | "assistant"; content: string }[],
 ): Promise<OpenAIResult> {
-  const apiKey = await context.settings.get("openaiApiKey");
+  // Try to get API key from Devvit settings first (production)
+  let apiKey = await context.settings.get("openaiApiKey");
+  
+  // Fall back to environment variable for local development
   if (!apiKey) {
-    throw new Error("OpenAI API key is not configured in app settings.");
+    apiKey = process.env.OPENAI_API_KEY;
+  }
+  
+  if (!apiKey) {
+    throw new Error(
+      "OpenAI API key is not configured. " +
+      "Set OPENAI_API_KEY in .env for development, or configure in app settings for production."
+    );
   }
 
   const response = await context.fetch("https://api.openai.com/v1/chat/completions", {

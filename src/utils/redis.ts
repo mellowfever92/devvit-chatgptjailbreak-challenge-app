@@ -213,8 +213,6 @@ export async function updateUserRateLimit(
   await context.redis.set(
     redisKeys.rateLimit(challengeId, userId),
     JSON.stringify(timestamps),
-    {
-      expireIn: 60 * 60, // one hour
-    },
+    { expiration: new Date(Date.now() + 60 * 60 * 1000) }, // one hour
   );
 }
