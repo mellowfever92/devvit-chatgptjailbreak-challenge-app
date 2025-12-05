@@ -37,12 +37,13 @@ export const SubmissionForm: Devvit.BlockComponent<SubmissionFormProps> = (props
     }
 
     // Input validation
-    if (prompt.length > MAX_PROMPT_LENGTH) {
+    const trimmedPrompt = prompt.trim();
+    if (trimmedPrompt.length > MAX_PROMPT_LENGTH) {
       setState({ status: 'error', message: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters.` });
       return;
     }
 
-    if (prompt.trim().length < MIN_PROMPT_LENGTH) {
+    if (trimmedPrompt.length < MIN_PROMPT_LENGTH) {
       setState({ status: 'error', message: `Prompt must be at least ${MIN_PROMPT_LENGTH} characters.` });
       return;
     }

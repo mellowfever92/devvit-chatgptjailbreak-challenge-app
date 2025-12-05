@@ -58,6 +58,11 @@ export class OpenAiClient {
         content: message,
         usage,
       };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('API request timed out. Please try again.');
+      }
+      throw error;
     } finally {
       clearTimeout(timeoutId);
     }
