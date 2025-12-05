@@ -1,3 +1,5 @@
+import { API_TIMEOUT_MS } from './constants.js';
+
 export const GPT4O_MODEL = 'gpt-4o-2024-08-06';
 export const JUDGE_MODEL = 'o4-mini';
 
@@ -26,30 +28,38 @@ export class OpenAiClient {
   }
 
   async chatCompletion(model: string, messages: OpenAiChatMessage[]): Promise<OpenAiChatResponse> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`OpenAI request failed (${response.status}): ${body}`);
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`OpenAI request failed (${response.status}): ${body}`);
+      }
+
+      const data = await response.json();
+      const message = data.choices?.[0]?.message?.content ?? '';
+      const usage = data.usage ?? { prompt_tokens: 0, completion_tokens: 0 };
+
+      return {
+        content: message,
+        usage,
+      };
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json();
-    const message = data.choices?.[0]?.message?.content ?? '';
-    const usage = data.usage ?? { prompt_tokens: 0, completion_tokens: 0 };
-
-    return {
-      content: message,
-      usage,
-    };
   }
 }

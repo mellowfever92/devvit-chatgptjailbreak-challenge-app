@@ -1,10 +1,11 @@
 import { Devvit, useState } from '@devvit/public-api';
 import type { Challenge, Submission } from '../types/index.js';
-import { checkRateLimit, incrementRateLimit } from '../utils/rateLimit.js';
+import { checkRateLimit, incrementRateLimit, checkGlobalRateLimit, incrementGlobalRateLimit } from '../utils/rateLimit.js';
 import { runTestPrompt } from '../utils/testPrompt.js';
 import { judgeSubmission as runJudge } from '../utils/judgeSubmission.js';
 import { saveSubmission, recordApiUsage, updateLeaderboard } from '../utils/redis.js';
-import { theme } from '../config/constants.js';
+import { theme, MAX_PROMPT_LENGTH, MIN_PROMPT_LENGTH } from '../config/constants.js';
+import { sanitizeErrorMessage } from '../utils/errorSanitizer.js';
 
 export interface SubmissionFormProps {
   challenge: Challenge;
@@ -35,9 +36,27 @@ export const SubmissionForm: Devvit.BlockComponent<SubmissionFormProps> = (props
       return;
     }
 
+    // Input validation
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      setState({ status: 'error', message: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters.` });
+      return;
+    }
+
+    if (prompt.trim().length < MIN_PROMPT_LENGTH) {
+      setState({ status: 'error', message: `Prompt must be at least ${MIN_PROMPT_LENGTH} characters.` });
+      return;
+    }
+
     setState({ status: 'submitting' });
 
     try {
+      // Check global rate limit first
+      const globalAllowed = await checkGlobalRateLimit(metadata.userId);
+      if (!globalAllowed) {
+        setState({ status: 'error', message: 'Global rate limit exceeded. Try again in an hour.' });
+        return;
+      }
+
       const { allowed } = await checkRateLimit(challenge.id, metadata.userId);
       if (!allowed) {
         setState({ status: 'error', message: 'Rate limit exceeded. Try again in an hour.' });
@@ -64,6 +83,7 @@ export const SubmissionForm: Devvit.BlockComponent<SubmissionFormProps> = (props
       };
 
       await incrementRateLimit(challenge.id, metadata.userId);
+      await incrementGlobalRateLimit(metadata.userId);
       await saveSubmission(submission);
       await recordApiUsage(submission);
       await updateLeaderboard(submission);
@@ -73,7 +93,7 @@ export const SubmissionForm: Devvit.BlockComponent<SubmissionFormProps> = (props
       onSubmissionComplete?.(submission);
     } catch (error) {
       console.error(error);
-      setState({ status: 'error', message: (error as Error).message });
+      setState({ status: 'error', message: sanitizeErrorMessage(error) });
     }
   };
 

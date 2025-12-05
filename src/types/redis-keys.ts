@@ -7,4 +7,5 @@ export const leaderboardApprovedKey = 'leaderboard:approved';
 export const leaderboardVotesKey = 'leaderboard:votes';
 export const voteKey = (challengeId: string, userId: string): string => `challenge:${challengeId}:vote:${userId}`;
 export const rateLimitKey = (challengeId: string, userId: string): string => `ratelimit:${challengeId}:${userId}`;
+export const globalRateLimitKey = (userId: string): string => `ratelimit:global:${userId}`;
 export const apiStatsKey = 'stats:api-usage';

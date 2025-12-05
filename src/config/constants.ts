@@ -1,6 +1,10 @@
 export const SUBMISSIONS_PER_PAGE = 5;
 export const RATE_LIMIT_SUBMISSIONS_PER_HOUR = 10;
+export const GLOBAL_RATE_LIMIT_PER_HOUR = 50;
 export const LEADERBOARD_LIMIT = 20;
+export const MAX_PROMPT_LENGTH = 4000;
+export const MIN_PROMPT_LENGTH = 10;
+export const API_TIMEOUT_MS = 60000;
 
 export const theme = {
   bg: {
