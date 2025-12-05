@@ -1,0 +1,21 @@
+name: chatgptjailbreak-challenge
+version: 0.0.1
+description: Reddit Devvit app for competitive AI jailbreak challenges
+main: src/main.tsx
+type: app
+permissions:
+  - posts
+  - comments
+  - modmail
+  - modlog
+  - wiki
+  - structured-styles
+  - menu_items
+  - read
+settings:
+  - type: string
+    name: openaiApiKey
+    label: OpenAI API Key
+    helpText: Your OpenAI API key for GPT-4o testing and o4-mini judging
+    isSecret: true
+    scope: app
